@@ -2,6 +2,28 @@ var Vue = (function (exports) {
     'use strict';
 
     /**
+     * effect 函数
+     * @param fn 执行方法
+     */
+    function effect(fn) {
+        // 生成 ReactiveEffect 实例
+        const _effect = new ReactiveEffect(fn);
+        // 执行 run 函数
+        _effect.run();
+    }
+    /**
+     * 响应性触发依赖时的执行类
+     */
+    class ReactiveEffect {
+        constructor(fn) {
+            this.fn = fn;
+        }
+        run() {
+            // 执行 fn 函数
+            return this.fn();
+        }
+    }
+    /**
      * 用于收集依赖的方法
      * @param target WeakMap 的 Key
      * @param key 代理对象的 key，当依赖被触发时，需要根据该 key 获取
@@ -92,6 +114,7 @@ var Vue = (function (exports) {
         return proxy;
     }
 
+    exports.effect = effect;
     exports.reactive = reactive;
 
     Object.defineProperty(exports, '__esModule', { value: true });

@@ -26,13 +26,34 @@ export class ReactiveEffect<T = any> {
   }
 }
 
+type KeyToDepMap = Map<any, ReactiveEffect>
+
+/**
+ * 收集所有依赖的 WeakMap 实例：
+ * key：响应性对象
+ * value：Map 对象
+ *    key：响应性对象的指定属性
+ *    value：指定对象的指定属性的 执行函数
+ */
+const targetMap = new WeakMap<any, KeyToDepMap>()
+
 /**
  * 用于收集依赖的方法
  * @param target WeakMap 的 Key
  * @param key 代理对象的 key，当依赖被触发时，需要根据该 key 获取
  */
 export function track(target: object, key: unknown) {
-  console.log('track 收集依赖')
+  // 如果当前不存在执行函数，则直接 return
+  if (!activeEffect) return
+  // 尝试从 targetMap 中，根据 target 获取 map
+  let depsMap = targetMap.get(target)
+  // 如果获取到的 map 不存在，则生成新的 map 对象，并把该对象赋值给对应的 value
+  if (!depsMap) {
+    targetMap.set(target, (depsMap = new Map()))
+  }
+  // 为指定 map，指定 key 设置回调函数
+  depsMap.set(key, activeEffect)
+  console.log(targetMap)
 }
 
 /**

@@ -61,7 +61,18 @@ var Vue = (function (exports) {
      * @param newValue 指定 key 的最新值
      */
     function trigger(target, key, newValue) {
-        console.log('trigger 触发依赖');
+        // 依据 target 获取存储的 map 实例
+        const depsMap = targetMap.get(target);
+        // 如果 map 不存在，则直接 return
+        if (!depsMap)
+            return;
+        // 依据 key，从 depsMap 中取出 value，该 value 是一个 ReactiveEffect 类型的数据
+        const effect = depsMap.get(key);
+        // 如果 effect 不存在，则直接 return
+        if (!effect)
+            return;
+        // 执行 effect 中保存的 fn 函数
+        effect.fn();
     }
 
     /**
@@ -92,7 +103,7 @@ var Vue = (function (exports) {
             // 利用 Reflect.set 设置新值
             const result = Reflect.set(target, key, value, receiver);
             // 触发依赖
-            trigger();
+            trigger(target, key);
             return result;
         };
     }

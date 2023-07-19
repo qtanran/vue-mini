@@ -1,3 +1,6 @@
+import { createDep, Dep } from './dep'
+import { isArray } from '@vue/shared'
+
 /**
  * effect 函数
  * @param fn 执行方法
@@ -26,7 +29,7 @@ export class ReactiveEffect<T = any> {
   }
 }
 
-type KeyToDepMap = Map<any, ReactiveEffect>
+type KeyToDepMap = Map<any, Dep>
 
 /**
  * 收集所有依赖的 WeakMap 实例：
@@ -51,9 +54,21 @@ export function track(target: object, key: unknown) {
   if (!depsMap) {
     targetMap.set(target, (depsMap = new Map()))
   }
-  // 为指定 map，指定 key 设置回调函数
-  depsMap.set(key, activeEffect)
-  console.log(targetMap)
+  // 获取指定 key 的 dep
+  let dep = depsMap.get(key)
+  // 如果 dep 不存在，则生成一个新的，并放入到 depsMap 中
+  if (!dep) {
+    depsMap.set(key, (dep = createDep()))
+  }
+  trackEffects(dep)
+}
+
+/**
+ * 利用 dep 依次跟踪指定 key 的所有 effect
+ * @param dep
+ */
+export function trackEffects(dep: Dep) {
+  dep.add(activeEffect!)
 }
 
 /**
@@ -67,10 +82,31 @@ export function trigger(target: object, key?: unknown, newValue?: unknown) {
   const depsMap = targetMap.get(target)
   // 如果 map 不存在，则直接 return
   if (!depsMap) return
-  // 依据 key，从 depsMap 中取出 value，该 value 是一个 ReactiveEffect 类型的数据
-  const effect = depsMap.get(key) as ReactiveEffect
-  // 如果 effect 不存在，则直接 return
-  if (!effect) return
-  // 执行 effect 中保存的 fn 函数
-  effect.fn()
+  // 根据指定的 key，获取 dep 实例
+  let dep: Dep | undefined = depsMap.get(key)
+  // dep 不存在则直接 return
+  if (!dep) return
+  // 触发 dep
+  triggerEffects(dep)
+}
+
+/**
+ * 依次触发 dep 中保存的依赖
+ * @param dep
+ */
+export function triggerEffects(dep: Dep) {
+  // 把 dep 构建为一个数组
+  const effects = isArray(dep) ? dep : [...dep]
+  // 依次触发
+  for (const effect of effects) {
+    triggerEffect(effect)
+  }
+}
+
+/**
+ * 触发指定的依赖
+ * @param effect
+ */
+export function triggerEffect(effect: ReactiveEffect) {
+  effect.run()
 }

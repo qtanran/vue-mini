@@ -1,6 +1,7 @@
 import { createDep, Dep } from './dep'
-import { activeEffect, trackEffects } from './effect'
+import { activeEffect, trackEffects, triggerEffects } from './effect'
 import { toReactive } from './reactive'
+import { hasChanged } from '@vue/shared'
 
 export interface Ref<T = any> {
   value: T
@@ -27,6 +28,7 @@ function createRef(rawValue: unknown, shallow: boolean) {
 
 class RefImpl<T> {
   private _value: T
+  private _rawValue: T
 
   public dep?: Dep = undefined
 
@@ -40,6 +42,8 @@ class RefImpl<T> {
     // 如果 __v_isShallow 为 true，则 value 不会被转化为 reactive 数据
     // 即如果当前 value 为复杂数据类型，则会失去响应性
     this._value = __v_isShallow ? value : toReactive(value)
+    // 原始数据
+    this._rawValue = value
   }
 
   /**
@@ -51,7 +55,31 @@ class RefImpl<T> {
     return this._value
   }
 
-  set value(newVal) {}
+  set value(newVal) {
+    /**
+     * 对比两个数据是否发生了变化
+     * newVal 为新数据
+     * this._rawValue 为旧数据（原始数据）
+     */
+    if (hasChanged(newVal, this._rawValue)) {
+      // 更新原始数据
+      this._rawValue = newVal
+      // 更新 .value 的值
+      this._value = toReactive(newVal)
+      // 触发依赖
+      triggerRefValue(this)
+    }
+  }
+}
+
+/**
+ * 为 ref 的 value 进行触发依赖工作
+ * @param ref
+ */
+export function triggerRefValue(ref) {
+  if (ref.dep) {
+    triggerEffects(ref.dep)
+  }
 }
 
 /**

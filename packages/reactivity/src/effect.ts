@@ -15,6 +15,7 @@ export function effect<T = any>(fn: () => T) {
 
 // 单例的，当前的 effect
 export let activeEffect: ReactiveEffect | undefined
+export type EffectScheduler = (...args: any[]) => any
 
 /**
  * 响应性触发依赖时的执行类
@@ -25,7 +26,10 @@ export class ReactiveEffect<T = any> {
    */
   computed?: ComputedRefImpl<T>
 
-  constructor(public fn: () => T) {}
+  constructor(
+    public fn: () => T,
+    public scheduler: EffectScheduler | null = null
+  ) {}
 
   run() {
     // 为 activeEffect 赋值
@@ -114,5 +118,12 @@ export function triggerEffects(dep: Dep) {
  * @param effect
  */
 export function triggerEffect(effect: ReactiveEffect) {
-  effect.run()
+  // 存在调度器就执行调度函数
+  if (effect.scheduler) {
+    effect.scheduler()
+  }
+  // 否则直接执行 run 函数即可
+  else {
+    effect.run()
+  }
 }

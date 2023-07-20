@@ -14,3 +14,9 @@ export const isObject = (val: unknown) => val !== null && typeof val === 'object
  * @param oldValue
  */
 export const hasChanged = (value: any, oldValue: any): boolean => !Object.is(value, oldValue)
+
+/**
+ * 是否为一个 function
+ * @param val
+ */
+export const isFunction = (val: unknown): val is Function => typeof val === 'function'

@@ -107,9 +107,16 @@ export function trigger(target: object, key?: unknown, newValue?: unknown) {
 export function triggerEffects(dep: Dep) {
   // 把 dep 构建为一个数组
   const effects = isArray(dep) ? dep : [...dep]
-  // 依次触发
+  // 先触发所有的计算属性依赖，再触发所有的非计算属性依赖
   for (const effect of effects) {
-    triggerEffect(effect)
+    if (effect.computed) {
+      triggerEffect(effect)
+    }
+  }
+  for (const effect of effects) {
+    if (!effect.computed) {
+      triggerEffect(effect)
+    }
   }
 }
 

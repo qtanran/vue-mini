@@ -1,16 +1,28 @@
 import { createDep, Dep } from './dep'
-import { isArray } from '@vue/shared'
+import { extend, isArray } from '@vue/shared'
 import { ComputedRefImpl } from './computed'
+
+export interface ReactiveEffectOptions {
+  lazy?: boolean
+  scheduler?: EffectScheduler
+}
 
 /**
  * effect 函数
  * @param fn 执行方法
+ * @param options
  */
-export function effect<T = any>(fn: () => T) {
+export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
   // 生成 ReactiveEffect 实例
   const _effect = new ReactiveEffect(fn)
-  // 执行 run 函数
-  _effect.run()
+  // 存在 options，则合并配置对象
+  if (options) {
+    extend(_effect, options)
+  }
+  if (!options || !options.lazy) {
+    // 执行 run 函数
+    _effect.run()
+  }
 }
 
 // 单例的，当前的 effect

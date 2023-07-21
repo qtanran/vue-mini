@@ -1,4 +1,4 @@
-import { EMPTY_OBJ, hasChanged } from '@vue/shared'
+import { EMPTY_OBJ, hasChanged, isObject } from '@vue/shared'
 import { isReactive, ReactiveEffect } from '@vue/reactivity'
 import { queuePreFlushCb } from './scheduler'
 
@@ -37,7 +37,7 @@ function doWatch(source, cb: Function, { immediate, deep }: WatchOptions = EMPTY
   // 存在回调函数和 deep
   if (cb && deep) {
     const baseGetter = getter
-    getter = () => baseGetter()
+    getter = () => traverse(baseGetter())
   }
 
   // 调度器
@@ -70,4 +70,19 @@ function doWatch(source, cb: Function, { immediate, deep }: WatchOptions = EMPTY
   return () => {
     effect.stop()
   }
+}
+
+/**
+ * 依次执行 getter，从而触发依赖收集
+ * @param value
+ */
+export function traverse(value: unknown) {
+  if (!isObject(value)) {
+    return value
+  }
+
+  for (const key in value as object) {
+    traverse((value as any)[key])
+  }
+  return value
 }

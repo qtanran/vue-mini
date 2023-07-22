@@ -1,4 +1,5 @@
 export { ShapeFlags } from './shapeFlags'
+export { normalizeClass } from './normalizeProp'
 
 /**
  * 判断是否为一个数组

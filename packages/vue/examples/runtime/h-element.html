@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+    <script src="../../dist/vue.js"></script>
+  </head>
+  <body></body>
+  <script>
+    const { h } = Vue
+
+    const vnode = h(
+      'div',
+      {
+        class: 'test'
+      },
+      'hello render'
+    )
+
+    console.log(vnode)
+  </script>
+</html>

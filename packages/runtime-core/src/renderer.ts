@@ -83,7 +83,7 @@ export function createRenderer(options: RendererOptions): any {
       case Fragment:
         break
       default:
-        if (shapeFlag & shapeFlag.ELEMENT) {
+        if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(oldVNode, newVNode, container, anchor)
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
         }

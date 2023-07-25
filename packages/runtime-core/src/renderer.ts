@@ -1,5 +1,6 @@
 import { EMPTY_OBJ, ShapeFlags } from '@vue/shared'
 import { Comment, Fragment, isSameVNodeType } from './vnode'
+import { cloneIfMounted, normalizeVNode, renderComponentRoot } from './componentRenderUtils'
 
 /**
  * 渲染器配置对象
@@ -38,6 +39,21 @@ export function createRenderer(options: RendererOptions): any {
     setText: hostSetText,
     createComment: hostCreateComment
   } = options
+
+  /**
+   * Fragment 的打补丁操作
+   * @param oldVNode
+   * @param newVNode
+   * @param container
+   * @param anchor
+   */
+  const processFragment = (oldVNode, newVNode, container, anchor) => {
+    if (oldVNode == null) {
+      mountChildren(newVNode.children, container, anchor)
+    } else {
+      patchChildren(oldVNode, newVNode, container, anchor)
+    }
+  }
 
   /**
    * Comment 的打补丁操作
@@ -229,6 +245,19 @@ export function createRenderer(options: RendererOptions): any {
     hostInsert(el, container, anchor)
   }
 
+  /**
+   * 挂载子节点
+   * @param children
+   * @param container
+   * @param anchor
+   */
+  const mountChildren = (children, container, anchor) => {
+    for (let i = 0; i < children.length; i++) {
+      const child = normalizeVNode(children[i])
+      patch(null, child, container, anchor)
+    }
+  }
+
   const patch = (oldVNode, newVNode, container, anchor = null) => {
     if (oldVNode === newVNode) return
 
@@ -251,6 +280,8 @@ export function createRenderer(options: RendererOptions): any {
         processCommentNode(oldVNode, newVNode, container, anchor)
         break
       case Fragment:
+        // Fragment
+        processFragment(oldVNode, newVNode, container, anchor)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
